@@ -28,3 +28,5 @@ setup(
         "Operating System :: POSIX :: Linux"
     ]
 )
+
+# twine upload dist/*

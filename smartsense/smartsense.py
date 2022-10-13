@@ -10,7 +10,7 @@ import sense_hat
 import sense_emu
 
 # SmartSense Code
-def smart_sense(force_emu:bool = False) -> Union[sense_hat.SenseHat,sense_emu.SenseHat]:
+class SmartSense():
     """
     Takes a bool as an optional input, and returns an instance of sense_hat.SenseHat
     if an Adafruit SenseHat is connected to the pi, and returns an instance of
@@ -26,7 +26,28 @@ def smart_sense(force_emu:bool = False) -> Union[sense_hat.SenseHat,sense_emu.Se
         returns an instance of sense_emu.SenseHat if an Adafruit SenseHat is
         not connected to the pi, or if force_emu is True.
     """
-    def set_sense_emu() -> sense_emu.SenseHat:
+    def __init__(self, force_emu:bool=False) -> Union[sense_hat.SenseHat,sense_emu.SenseHat]:
+        """
+        Generates attributes for SmartSense class
+
+        Args:
+            force_emu (bool, optional): Forces the class to return the emulated Sense Hat
+            even if physical sense hat is connected. Defaults to False.
+        """
+        self._force_emu = force_emu
+
+        try:
+            self.sense = sense_hat.SenseHat()
+            if force_emu:
+                self.sense = self.set_sense_emu()
+
+        except OSError as no_sense_hat:
+            # check if OSError is from a missing sense hat
+            if str(no_sense_hat) == "Cannot detect RPi-Sense FB device":
+                logging.info("Could not find Sense Hat! Using emulated Sense Hat...")
+                self.sense = self.set_sense_emu()
+
+    def set_sense_emu(self) -> sense_emu.SenseHat:
         """
         Returns a sense_emu Sense Hat object, while opening the emulator automatically
 
@@ -39,15 +60,3 @@ def smart_sense(force_emu:bool = False) -> Union[sense_hat.SenseHat,sense_emu.Se
             if caught_warnings != []:
                 logging.info("Opening Sense Emulator GUI...")
         return emulated_sense
-
-    try:
-        sense = sense_hat.SenseHat()
-        if force_emu:
-            sense = set_sense_emu()
-
-    except OSError as no_sense_hat:
-        # check if OSError is from a missing sense hat
-        if str(no_sense_hat) == "Cannot detect RPi-Sense FB device":
-            logging.info("Could not find Sense Hat! Using emulated Sense Hat...")
-            sense = set_sense_emu()
-    return sense
